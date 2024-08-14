@@ -1,118 +1,188 @@
-import Image from "next/image";
-import { Inter } from "next/font/google";
+import FormTask from "@/components/form";
+import ListTask from "@/components/listTask";
+import { Poppins } from "next/font/google";
+import { useState } from "react";
 
-const inter = Inter({ subsets: ["latin"] });
+const poppins = Poppins({
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+  display: "swap",
+});
 
-export default function Home() {
+export default function Home({ initialOnGoingTask, initialCompletedTask }) {
+  const [isEdit, setIsEdit] = useState(false);
+  const [value, setValue] = useState({
+    id: null,
+    title: "",
+  });
+  const [onGoingTask, setOnGoingTask] = useState(initialOnGoingTask);
+  const [completedTask, setCompletedTask] = useState(initialCompletedTask);
+
+  const handleIsEdit = (data) => {
+    setIsEdit(true);
+    setValue({ title: data?.title, id: data?.id });
+    console.log(data);
+  };
+  const handleAddTask = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/api/task", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: value?.title,
+        }),
+      });
+
+      if (res.ok) {
+        setValue("");
+        const { onGoingTask, completedTask } = await fetchTasks();
+        setOnGoingTask(onGoingTask);
+        setCompletedTask(completedTask);
+      } else {
+        console.error("Failed to add task");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleEditTask = async () => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/task/${value?.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: value?.title,
+        }),
+      });
+
+      if (res.ok) {
+        setValue("");
+        const { onGoingTask, completedTask } = await fetchTasks();
+        setOnGoingTask(onGoingTask);
+        setCompletedTask(completedTask);
+      } else {
+        console.error("Failed to add task");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleCompleteTask = async (id, checked) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/task/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          completed: !checked,
+        }),
+      });
+
+      if (res.ok) {
+        setValue("");
+        const { onGoingTask, completedTask } = await fetchTasks();
+        setOnGoingTask(onGoingTask);
+        setCompletedTask(completedTask);
+      } else {
+        console.error("Failed to add task");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleDeletedTask = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/task/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        setValue("");
+        const { onGoingTask, completedTask } = await fetchTasks();
+        setOnGoingTask(onGoingTask);
+        setCompletedTask(completedTask);
+      } else {
+        console.error("Failed to add task");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
+      className={`flex min-h-screen bg-white flex-col items-center justify-between p-24 ${poppins.className}`}
     >
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/pages/index.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+      <div className="flex flex-col gap-y-8 w-1/2 px-10 py-5">
+        <h1 className="text-2xl font-semibold text-center">Task Management</h1>
+        <FormTask
+          handleAddTask={handleAddTask}
+          setIsEdit={setIsEdit}
+          setValue={setValue}
+          value={value}
+          isEdit={isEdit}
+          handleEditTask={handleEditTask}
         />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+        <ListTask
+          title={"Ongoing task"}
+          tasks={onGoingTask}
+          handleIsEdit={handleIsEdit}
+          handleCompleteTask={handleCompleteTask}
+          handleDeletedTask={handleDeletedTask}
+        />
+        <ListTask
+          title={"Completed task"}
+          tasks={completedTask}
+          handleIsEdit={handleIsEdit}
+          handleCompleteTask={handleCompleteTask}
+          handleDeletedTask={handleDeletedTask}
+        />
       </div>
     </main>
   );
+}
+
+export async function getServerSideProps() {
+  const { onGoingTask, completedTask } = await fetchTasks();
+  return {
+    props: {
+      initialOnGoingTask: onGoingTask,
+      initialCompletedTask: completedTask,
+    },
+  };
+}
+
+async function fetchTasks() {
+  let onGoingTask = [];
+  let completedTask = [];
+
+  try {
+    const res = await fetch("http://localhost:3000/api/task", {
+      method: "GET",
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const tasks = await res.json();
+
+    onGoingTask = tasks?.filter((task) => !task?.completed);
+    completedTask = tasks
+      ?.filter((task) => task?.completed)
+      ?.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } catch (error) {
+    console.error("Failed to fetch tasks:", error);
+  }
+
+  return { onGoingTask, completedTask };
 }
